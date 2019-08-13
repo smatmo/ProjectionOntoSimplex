@@ -34,7 +34,7 @@ def project_simplex(v, z=1.0, axis=-1):
             mu = torch.sort(v, dim=1)[0]
             mu = torch.flip(mu, dims=(1,))
             cum_sum = torch.cumsum(mu, dim=1)
-            j = torch.unsqueeze(torch.arange(1, shape[1] + 1, dtype=mu.dtype), 0)
+            j = torch.unsqueeze(torch.arange(1, shape[1] + 1, dtype=mu.dtype, device=mu.device), 0)
             rho = torch.sum(mu * j - cum_sum + z > 0.0, dim=1, keepdim=True) - 1.
             max_nn = cum_sum[torch.arange(shape[0]), rho[:, 0]]
             theta = (torch.unsqueeze(max_nn, -1) - z) / (rho.type(max_nn.dtype) + 1)
@@ -65,6 +65,7 @@ if __name__ == "__main__":
     # violations will be larger for float32
     # precision = torch.float32
     precision = torch.float64
+    device = 'cuda'
 
     z = 1.0
     overall_nonneg_violation = 0.0
@@ -85,7 +86,7 @@ if __name__ == "__main__":
         suboptimality = 0.0
 
         for rep in range(100):
-            x = torch.randn(d, dtype=precision)
+            x = torch.randn(d, dtype=precision, device=device)
             x_projected = project_simplex(x, z)
 
             if rep == 0:
@@ -99,7 +100,7 @@ if __name__ == "__main__":
 
             D = torch.sum((x_projected - x)**2)**0.5
 
-            x_perturbed = torch.unsqueeze(x_projected, -1) + 0.01 * torch.randn(d, 10000, dtype=precision)
+            x_perturbed = torch.unsqueeze(x_projected, -1) + 0.01 * torch.randn(d, 10000, dtype=precision, device=device)
             x_perturbed = torch.clamp(x_perturbed, min=0.0)
             x_perturbed /= torch.sum(x_perturbed, dim=0, keepdim=True)
             x_perturbed *= z
@@ -137,7 +138,7 @@ if __name__ == "__main__":
                 suboptimality = 0.0
 
                 x_shape = (10,) * a + (d,) + (10,) * (m-a-1)
-                x = torch.randn(x_shape, dtype=precision)
+                x = torch.randn(x_shape, dtype=precision, device=device)
 
                 x_projected = project_simplex(x, z, axis=a)
 
@@ -146,7 +147,7 @@ if __name__ == "__main__":
 
                 D = torch.sum((x_projected - x)**2, dim=a)**0.5
 
-                x_perturbed = x_projected + 0.01 * torch.randn(x_projected.shape, dtype=precision)
+                x_perturbed = x_projected + 0.01 * torch.randn(x_projected.shape, dtype=precision, device=device)
                 x_perturbed = torch.clamp(x_perturbed, min=0.0)
                 x_perturbed /= torch.sum(x_perturbed, dim=a, keepdim=True)
                 x_perturbed *= z
