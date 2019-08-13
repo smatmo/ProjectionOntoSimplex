@@ -62,6 +62,10 @@ def project_simplex(v, z=1.0, axis=-1):
 
 if __name__ == "__main__":
 
+    # violations will be larger for float32
+    # precision = np.float32
+    precision = np.float64
+
     z = 1.0
     overall_nonneg_violation = 0.0
     overall_l1_violation = 0.0
@@ -81,7 +85,7 @@ if __name__ == "__main__":
         suboptimality = 0.0
 
         for rep in range(100):
-            x = np.random.randn(d)
+            x = np.random.randn(d).astype(precision)
             x_projected = project_simplex(x, z)
 
             if rep == 0:
@@ -95,7 +99,7 @@ if __name__ == "__main__":
 
             D = np.sum((x_projected - x)**2)**0.5
 
-            x_perturbed = np.expand_dims(x_projected, -1) + 0.01 * np.random.randn(d, 10000)
+            x_perturbed = np.expand_dims(x_projected, -1) + 0.01 * np.random.randn(d, 10000).astype(precision)
             x_perturbed = x_perturbed.clip(min=0.0)
             x_perturbed /= np.sum(x_perturbed, 0, keepdims=True)
             x_perturbed *= z
@@ -133,7 +137,7 @@ if __name__ == "__main__":
                 suboptimality = 0.0
 
                 x_shape = (10,) * a + (d,) + (10,) * (m-a-1)
-                x = np.random.randn(*x_shape)
+                x = np.random.randn(*x_shape).astype(precision)
 
                 x_projected = project_simplex(x, z, axis=a)
 
@@ -142,7 +146,7 @@ if __name__ == "__main__":
 
                 D = np.sum((x_projected - x)**2, axis=a)**0.5
 
-                x_perturbed = x_projected + 0.01 * np.random.randn(*x_projected.shape)
+                x_perturbed = x_projected + 0.01 * np.random.randn(*x_projected.shape).astype(precision)
                 x_perturbed = x_perturbed.clip(min=0.0)
                 x_perturbed /= np.sum(x_perturbed, axis=a, keepdims=True)
                 x_perturbed *= z
@@ -169,5 +173,5 @@ if __name__ == "__main__":
     print("l1 violation violation {:0.12f} detected.".format(overall_l1_violation))
     print("suboptimality {:0.12f} detected.".format(overall_suboptimality))
     print("")
-    print("All these values should be close to zero")
+    print("All these values should be close to zero.")
     print("")
