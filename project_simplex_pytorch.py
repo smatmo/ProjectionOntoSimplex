@@ -41,22 +41,23 @@ def project_simplex(v, z=1.0, axis=-1):
             w = torch.clamp(v - theta, min=0.0)
             return w
 
-    shape = v.shape
+    with torch.no_grad():
+        shape = v.shape
 
-    if len(shape) == 1:
-        return _project_simplex_2d(torch.unsqueeze(v, 0), z)[0, :]
-    else:
-        axis = axis % len(shape)
-        t_shape = tuple(range(axis)) + tuple(range(axis + 1, len(shape))) + (axis,)
-        tt_shape = tuple(range(axis)) + (len(shape) - 1,) + tuple(range(axis, len(shape) - 1))
-        v_t = v.permute(t_shape)
-        v_t_shape = v_t.shape
-        v_t_unroll = torch.reshape(v_t, (-1, v_t_shape[-1]))
+        if len(shape) == 1:
+            return _project_simplex_2d(torch.unsqueeze(v, 0), z)[0, :]
+        else:
+            axis = axis % len(shape)
+            t_shape = tuple(range(axis)) + tuple(range(axis + 1, len(shape))) + (axis,)
+            tt_shape = tuple(range(axis)) + (len(shape) - 1,) + tuple(range(axis, len(shape) - 1))
+            v_t = v.permute(t_shape)
+            v_t_shape = v_t.shape
+            v_t_unroll = torch.reshape(v_t, (-1, v_t_shape[-1]))
 
-        w_t = _project_simplex_2d(v_t_unroll, z)
+            w_t = _project_simplex_2d(v_t_unroll, z)
 
-        w_t_reroll = torch.reshape(w_t, v_t_shape)
-        return w_t_reroll.permute(tt_shape)
+            w_t_reroll = torch.reshape(w_t, v_t_shape)
+            return w_t_reroll.permute(tt_shape)
 
 
 if __name__ == "__main__":
