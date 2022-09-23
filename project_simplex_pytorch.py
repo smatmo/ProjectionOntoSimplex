@@ -36,6 +36,7 @@ def project_simplex(v, z=1.0, axis=-1):
             cum_sum = torch.cumsum(mu, dim=1)
             j = torch.unsqueeze(torch.arange(1, shape[1] + 1, dtype=mu.dtype, device=mu.device), 0)
             rho = torch.sum(mu * j - cum_sum + z > 0.0, dim=1, keepdim=True) - 1.
+            rho = rho.to(int)  # as indices can't be float type
             max_nn = cum_sum[torch.arange(shape[0]), rho[:, 0]]
             theta = (torch.unsqueeze(max_nn, -1) - z) / (rho.type(max_nn.dtype) + 1)
             w = torch.clamp(v - theta, min=0.0)
